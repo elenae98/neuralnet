@@ -1,3 +1,3 @@
 # neuralnet
 
-for progress on our gitch detecting neural net
+for progress on our lagged image detecting neural net
