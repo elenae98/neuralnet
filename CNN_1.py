@@ -43,7 +43,7 @@ import torch.nn.functional as F
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        """ defining convalutional layers, pooling layers, and fully connected layers
+        """ defining convolutional layers, pooling layers, and fully connected layers
             probably need to change numbers based off input data
             I think we define the layers we want to use here
         """
