@@ -11,59 +11,90 @@ from PIL import Image
 import glob as glob
 import matplotlib.pyplot as plt
 from numpy import genfromtxt
+import scipy.misc
 
-# Gaussian image detector
 
-# count = 1
+
 '''import image'''
+imgArray = genfromtxt('../data/(기준)22-Feb-2018 15-32-02 Surface Phase6 TypeBoth Camera1.map', delimiter=',')
 
-# imageArrays = []
+plt.imsave(imgArray, '../data/exImage.png')
 
-# for pic in glob.glob('../cats/CAT_00/*.jpg'):
-#    img = Image.open(pic)
-#     imgArray = np.array(img)
-
-imgArray = genfromtxt('./data/', delimiter=',')
-
-plt.figure(count)
-
-v_min, v_max = np.percentile(imgArray, (30, 70))
-imgArray = exposure.rescale_intensity(imgArray, in_range=(v_min, v_max))
-plt.subplot(221)
-plt.imshow(imgArray)
-
-imgArray = median_filter(imgArray, 7)
-plt.subplot(222)
-plt.imshow(imgArray)
-
-result = gaussian_filter(imgArray, sigma=7)
-plt.imshow(result)
+# flatImg = np.ndarray.flatten(imgArray[~np.isnan(imgArray)])
+# # print(flatImg.shape)
+# # hist = np.histogram(flatImg)
+# plt.hist(flatImg)
 # plt.show()
 
-result2 = gaussian_filter(imgArray, sigma=3)
-subt = result - result2
 
-plt.subplot(223)
-plt.imshow(subt)
+'''clipping pixel values to a smaller range'''
+v_min, v_max = np.percentile(imgArray[~np.isnan(imgArray)], (0.75, 98)) #clip
+# '''amplify contrast'''
+# # imgArray = exposure.rescale_intensity(imgArray, in_range=(v_min, v_max)) #contrast
+# # plt.subplot(221) #plot to show on figure later
+# # plt.imshow(imgArray)
+imgArray[imgArray<v_min] = v_min
+imgArray[imgArray>v_max] = v_max
+
+
+
+
+'''normalize array values to fit color map 0-255'''
+min_val = np.min(imgArray[~np.isnan(imgArray)])
+max_val = np.max(imgArray[~np.isnan(imgArray)])
+print(min_val)
+print(max_val)
+
+imgArray -= min_val
+imgArray *= 255 / (max_val - min_val)
+
+min_val = np.min(imgArray[~np.isnan(imgArray)])
+max_val = np.max(imgArray[~np.isnan(imgArray)])
+print(min_val)
+print(max_val)
+
+#hist
+flatImg = np.ndarray.flatten(imgArray[~np.isnan(imgArray)])
+plt.hist(flatImg)
+plt.show() #mode is between 130 and 150
+
+
+'''makes mode 0 and omits'''
+# modeArray = imgArray[imgArray>130]
+# modeArray = modeArray[modeArray<150]
+
+max_arr = imgArray
+max_arr[np.isnan(imgArray)] = 0
+max_arr[max_arr < 150] = 0
+
+min_arr = imgArray
+min_arr[np.isnan(imgArray)] = 0
+min_arr[imgArray > 130] = 0
+outlier_arr = max_arr + min_arr
+
+outlier_arr[outlier_arr == 0] = np.nan
+
+plt.subplot(221)
+var1 = plt.imshow(outlier_arr, cmap="inferno")
+plt.colorbar(var1)
 plt.show()
-
-'''
-round2a = gaussian_filter(subt, sigma = 7)
-round2b = gaussian_filter(subt, sigma = 2)
-subt2 = round2a - round2b
-plot2 = plt
-
-plot2.imshow(subt2)
-plot2.show()
-
-'''
-Image.Image.close(img)
-imageArrays.append(imgArray)
-count += 1
-if count == 5:
-    break
-
-# make a filter the size of the image
-
-
-# find gradients with different sigmas and subtract the filters from ea other
+#
+# '''median filter to blur small details out'''
+# imgArray = median_filter(imgArray, 3)
+# plt.subplot(222)
+# plt.imshow(imgArray[(imgArray<130 and imgArray>150)], cmap="inferno")
+#
+# '''difference of gaussian blur filters for edge detection'''
+# gauss1 = gaussian_filter(imgArray, sigma=3)
+# gauss2 = gaussian_filter(imgArray, sigma=1)
+# subt = gauss2-gauss1
+# plt.subplot(223)
+# plt.imshow(subt[(imgArray<130 and imgArray>150)], cmap="inferno")
+# plt.show()
+#
+#
+#
+# # make a filter the size of the image
+#
+#
+# # find gradients with different sigmas and subtract the filters from ea other
