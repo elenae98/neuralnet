@@ -57,17 +57,17 @@ filter1 = 5
 """conv2"""
 input2 = output1
 output2 = 16 
-filter2 = 5
+filter2 = filter1
 
 """fc"""
-fcin1 = output2 * 8 * 8 # product of dimension of data before fc layers
-fcout1 = 120
+fcin1 = output2 * 5 * 5 # product of dimension of data before fc layers
+fcout1 = 150
 fcin2 = fcout1
-fcout2 = 84
+fcout2 = 90
 fcin3 = fcout2
 fcout3 = 10
 
-num_epochs = 2
+num_epochs = 4
 learning_rate = 0.001
 
 class Net(nn.Module):
@@ -90,9 +90,9 @@ class Net(nn.Module):
         # 5x5 square convolution kernel(filter)
         self.conv2 = nn.Conv2d(input2, output2, filter2)
         # fc = fully connected layer (in this case, there are 3)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+        self.fc1 = nn.Linear(fcin1, fcout1)
+        self.fc2 = nn.Linear(fcin2, fcout2)
+        self.fc3 = nn.Linear(fcin3, fcout3)
 
     def forward(self, x):
         """ forward pass thorugh network, I think the order goes:
@@ -139,7 +139,7 @@ for epoch in range(num_epochs):  # loop over the dataset multiple times
         """I think we can keep this too"""
         # forward + backward + optimize
         outputs = net(inputs) # get outputs
-        loss = criterion(outputs, labels) #calculates loss
+        loss = criterion(outputs, labels) # calculates loss
         loss.backward() # backpropagation
         optimizer.step() # update the weights
 
@@ -152,3 +152,55 @@ for epoch in range(num_epochs):  # loop over the dataset multiple times
             running_loss = 0.0
 
 print('Finished Training')
+
+"""Test"""
+import matplotlib.pyplot as plt
+import numpy as np
+
+correct = 0
+total = 0
+with torch.no_grad():
+    for data in testloader:
+        images, labels = data
+        outputs = net(images)
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+print(' ')
+print('Accuracy of the network on the 10000 test images: %d %%' % (100 * correct / total))
+print(' ')
+
+class_correct = list(0. for i in range(10))
+class_total = list(0. for i in range(10))
+with torch.no_grad():
+    for data in testloader:
+        images, labels = data
+        outputs = net(images)
+        _, predicted = torch.max(outputs, 1)
+        c = (predicted == labels).squeeze()
+        for i in range(4):
+            label = labels[i]
+            class_correct[label] += c[i].item()
+            class_total[label] += 1
+
+
+for i in range(10):
+    print('Accuracy of %5s : %2d %%' % (classes[i], 100 * class_correct[i] / class_total[i]))
+
+
+# functions to show an image
+def imshow(img):
+    img = img / 2 + 0.5     # unnormalize
+    npimg = img.numpy()
+    plt.imshow(np.transpose(npimg, (1, 2, 0)))
+
+"""
+#get random images
+dataiter = iter(testloader)
+images, labels = dataiter.next()
+
+# print images
+imshow(torchvision.utils.make_grid(images))
+print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
+"""
+
