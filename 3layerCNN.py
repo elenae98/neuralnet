@@ -1,26 +1,10 @@
-""" Notes:
-- I got this code of the PyTorch Tutorial for training a classifier, heres the link:
-  https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html#
-- On the site, they load in the CIFAR10 dataset, so the training part has some parts that
-  depends on that, need to work on how to change those parts to work with an inputted dataset
-- In the "Loading and Normalizing Data" section, I tried to show how we'd input our own data
-  and convert it to torch tensors, right now I think the code would only load an image and convert
-  it to a tensor, but I think we need to make a whole dataset like the code does online fro the
-  CIFAR10 dataset, need ot look more into that
-- ** I tested this method of loading pictured and converting to a pytorch tensor, now I think we
-  need to make the whole set of training photos into one dataset(batch) to traing the network with
-  the method below
-- I think we need to make a dataset class to make our dataset
-- I was thinking we could make all the hyperparameters variables in the begining, like num_epochs, num_classes,
-  batch_size, learning_rate
-"""
 
-"""Loading and Normalizing Data"""
 
 import torch
 import torchvision
 import torchvision.transforms as transforms
 
+"""Dataset"""
 transform = transforms.Compose(
     [transforms.ToTensor(),
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
@@ -34,6 +18,8 @@ testset = torchvision.datasets.CIFAR10(root='./data', train=False,
                                        download=True, transform=transform)
 testloader = torch.utils.data.DataLoader(testset, batch_size=4,
                                          shuffle=False, num_workers=2)
+
+start_time = time.clock() # Timer
 
 classes = ('plane', 'car', 'bird', 'cat',
            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
@@ -153,7 +139,7 @@ for epoch in range(num_epochs):  # loop over the dataset multiple times
         """ Need to look more into this part, I think it just prints the results
             so it's easy to read, but I'm not sure about the specifics """
         # print statistics
-        running_loss += loss.item() # I think this keeps track of the loss when triaining through each mini-batch
+        running_loss += loss.item() 
         if i % 2000 == 1999:    # print every 2000 mini-batches (when i == 1999+n)
             print('[%d, %5d] loss: %.3f' % (epoch + 1, i + 1, running_loss / 2000))
             running_loss = 0.0
@@ -194,7 +180,8 @@ with torch.no_grad():
 for i in range(10):
     print('Accuracy of %5s : %2d %%' % (classes[i], 100 * class_correct[i] / class_total[i]))
 
-
+print("--- %s seconds ---" % (time.clock() - start_time)) # Print time elapsed
+    
 # functions to show an image
 def imshow(img):
     img = img / 2 + 0.5     # unnormalize
