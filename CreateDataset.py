@@ -4,16 +4,16 @@ import numpy as np
 from PIL import Image
 
 # Create two dictionaries, one containing the IDs of images, and other containing labels of images
-imageIDs = {'trainingData': ['Torn_1', "Torn_2", ..., "notTorn_1", "notTorn_2", ...], 'testData' = [...]}
+imageIDs = {'trainingData': ['D-1-B-N-001-001.map', 'D-1-B-N-001-002.map', 'D-1-B-N-001-003.map', 'D-1-B-N-001-004.map', 'D-1-B-N-001-005.map', 'D-1-B-N-001.map', 'D-0-A-N-001.map', 'D-0-A-N-002.map', 'D-0-A-N-003.map', 'D-0-A-N-004.map', 'D-0-A-N-005.map', 'D-0-A-Y-001-000.map', 'D-0-A-Y-001-001.map', 'D-0-A-Y-001-002.map', 'D-0-A-Y-001-003.map', 'D-0-A-Y-001-004.map', 'D-0-A-Y-001-005.map', 'D-0-A-Y-001-006.map', 'D-0-A-Y-001-007.map', 'D-0-A-Y-001-008.map', 'D-0-A-Y-001-009.map', 'D-0-A-Y-001-010.map', 'D-0-A-Y-001-011.map', 'D-0-A-Y-002-000.map', 'D-0-A-Y-002-001.map', 'D-0-A-Y-002-002.map', 'D-0-A-Y-002-003.map', 'D-0-A-Y-002-004.map', 'D-0-A-Y-002-005.map', 'D-0-A-Y-002-006.map', 'D-0-A-Y-002-007.map', 'D-0-A-Y-002-008.map', 'D-0-A-Y-002-009.map', 'D-0-A-Y-002-010.map', 'D-0-A-Y-002-011.map', 'D-0-A-Y-003-000.map', 'D-0-A-Y-003-001.map', 'D-0-A-Y-003-002.map',  'D-0-A-Y-003-003.map', 'D-0-A-Y-003-004.map', 'D-0-A-Y-003-005.map', 'D-0-A-Y-003-006.map', 'D-0-A-Y-003-007.map', 'D-0-A-Y-003-008.map', 'D-0-A-Y-003-009.map', 'D-0-A-Y-003-010.map', 'D-0-A-Y-003-011.map'], 'testData': [...]}
 trainingLabels = {}
 
 # We can fill labels dictionary using for loop and by making the names of the images something like:
 # Torn_1, Torn_2, ..., notTorn_1, notTorn_2, ... (like above)
 for ID in imageIDs['trainingData']:
-    if "not" in ID:
-        trainingLabels[ID] = 0 # not torn
+    if "-0-" in ID:
+        trainingLabels[ID] = 0 
     else:
-        trainingLabels[ID] = 1 # torn
+        trainingLabels[ID] = 1 
 
 class TrainingSet(data.Dataset):
     def __init__(self, list_IDs, labels, folder):
@@ -35,14 +35,9 @@ class TrainingSet(data.Dataset):
         # Select sample
         ID = self.list_IDs[index]
 
-        # Load data and get label
-        # read file to a numpy array
-        im = Image.open("data/" + ID + ".bmp") # <- not sure what type of image we will have (.jpg or something else)
-        dataArray = np.array(im)
-        Image.Image.close(im)
-        # convert numpy array to pytorch tensor
-        dataTensor = torch.from_numpy(dataArray)
+        imgArray = genfromtxt('data/' + ID, delimiter=',')
+        ##include things to change array values here maybe (deal with NaN?)
+
         label = self.labels[ID]
 
-        return dataTensor, label
-
+        return imgArray, label
