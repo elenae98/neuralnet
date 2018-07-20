@@ -1,23 +1,26 @@
+
+
 import torch
 import torchvision
 import torchvision.transforms as transforms
 
 """Dataset"""
-transform = transforms.Compose(
-    [transforms.ToTensor(),
-     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+           # Create two dictionaries, one containing the IDs of images, and other containing labels of images
+imageIDs = {'trainingData': ['D-1-B-N-001-001.map', 'D-1-B-N-001-002.map', 'D-1-B-N-001-003.map', 'D-1-B-N-001-004.map', 'D-1-B-N-001-005.map', 'D-1-B-N-001.map', 'D-0-A-N-001.map', 'D-0-A-N-002.map', 'D-0-A-N-003.map', 'D-0-A-N-004.map', 'D-0-A-N-005.map', 'D-0-A-Y-001-000.map', 'D-0-A-Y-001-001.map', 'D-0-A-Y-001-002.map', 'D-0-A-Y-001-003.map', 'D-0-A-Y-001-004.map', 'D-0-A-Y-001-005.map', 'D-0-A-Y-001-006.map', 'D-0-A-Y-001-007.map', 'D-0-A-Y-001-008.map', 'D-0-A-Y-001-009.map', 'D-0-A-Y-001-010.map', 'D-0-A-Y-001-011.map', 'D-0-A-Y-002-000.map', 'D-0-A-Y-002-001.map', 'D-0-A-Y-002-002.map', 'D-0-A-Y-002-003.map', 'D-0-A-Y-002-004.map', 'D-0-A-Y-002-005.map', 'D-0-A-Y-002-006.map', 'D-0-A-Y-002-007.map', 'D-0-A-Y-002-008.map', 'D-0-A-Y-002-009.map', 'D-0-A-Y-002-010.map', 'D-0-A-Y-002-011.map', 'D-0-A-Y-003-000.map', 'D-0-A-Y-003-001.map', 'D-0-A-Y-003-002.map',  'D-0-A-Y-003-003.map', 'D-0-A-Y-003-004.map', 'D-0-A-Y-003-005.map', 'D-0-A-Y-003-006.map', 'D-0-A-Y-003-007.map', 'D-0-A-Y-003-008.map', 'D-0-A-Y-003-009.map', 'D-0-A-Y-003-010.map', 'D-0-A-Y-003-011.map'], 'testData': [...]}
+trainingLabels = {}
 
-trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-                                        download=True, transform=transform)
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
-                                          shuffle=True, num_workers=2)
-testset = torchvision.datasets.CIFAR10(root='./data', train=False,
-                                       download=True, transform=transform)
-testloader = torch.utils.data.DataLoader(testset, batch_size=4,
-                                         shuffle=False, num_workers=2)
+# We can fill labels dictionary using for loop and by making the names of the images something like:
+# Torn_1, Torn_2, ..., notTorn_1, notTorn_2, ... (like above)
+for ID in imageIDs['trainingData']:
+    if ID[2] == '0':
+        trainingLabels[ID] = 0 #clean
+    else:
+        trainingLabels[ID] = 1 #problematic
 
-start_time = time.clock() # Timer
-classes = (0, 1)
+trainingDataset = TrainingSet(imageIDs['trainingData'], trainingLabels, '/data')
+
+trainingLoader = torch.utils.data.DataLoader(trainingDataset, batch_size=1,
+                                          shuffle=True, num_workers=0) # ask about variables (batch_size, num_workers, etc)
 
 """Defining CNN"""
 
@@ -28,7 +31,10 @@ def outputSize(in_size, kernel_size, stride, padding):
     output = int((in_size - kernel_size + 2*(padding)) / stride) + 1
     return(output)
 
-datadim = (3,32,32) # if numpy array
+datadim = (3,2048,2592) # if numpy array (check if array tensor)
+
+# aks john about kernal_size and stride in relation to data size
+# also ask john about inputnodes/outputnodes
 
 """conv1"""
 input1 = datadim[0]
@@ -68,7 +74,7 @@ class Net(nn.Module):
         # 1 input image channel (b/c greyscale, 3 if RGB)
         # 6 output channels (# of nodes in the next layer)
         # 5x5 square convolution kernel(filter)
-        self.conv1 = nn.Conv2d(input1, output1, filter1, padding=2) 
+        self.conv1 = nn.Conv2d(input1, output1, filter1) 
         # Max pooling over a (2, 2) window
         self.pool = nn.MaxPool2d(2, 2)
         # 6 input channels/nodes
@@ -82,10 +88,6 @@ class Net(nn.Module):
         self.fc3 = nn.Linear(fcin3, fcout3)
 
     def forward(self, x):
-        """ forward pass thorugh network, I think the order goes:
-        conv1 -> relu -> Maxpool -> conv2 -> relu -> Maxpool -> fc1 -> relu -> fc2 -> sigmoid -> fc3
-            can change the order of these to whatever we want
-        """
         x = F.relu(self.conv1(x)) # computes the activation of first convolution
         x = self.pool(x) # Maxpooling layer
         x = F.relu(self.conv2(x)) # computes the activation of second convolution
@@ -112,36 +114,31 @@ optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=0.9) # helps 
 for epoch in range(num_epochs):  # loop over the dataset multiple times
                         # epoch is once over the full batch
     running_loss = 0.0
-    """ I think this will change based off our data
-        I think this for loop puts every image through the network
-        one at a time and updates the weights
-    """
-    for i, data in enumerate(trainloader):
+
+    for i, data in enumerate(trainingLoader):
         # get the inputs
         inputs, labels = data
 
-        """I think we can keep this"""
         # zero the parameter gradients
         optimizer.zero_grad()
 
-        """I think we can keep this too"""
         # forward + backward + optimize
         outputs = net(inputs) # get outputs
         loss = criterion(outputs, labels) # calculates loss
         loss.backward() # backpropagation
         optimizer.step() # update the weights
 
-        """ Need to look more into this part, I think it just prints the results
-            so it's easy to read, but I'm not sure about the specifics """
         # print statistics
         running_loss += loss.item() 
-        if i % 2000 == 1999:    # print every 2000 mini-batches (when i == 1999+n)
+        if i % 2000 == 1999:    # print every 2000 mini-batches (when i == 1999+n) --> need to make sure the numbers work
             print('[%d, %5d] loss: %.3f' % (epoch + 1, i + 1, running_loss / 2000))
             running_loss = 0.0
 
 print('Finished Training')
 
-"""Test"""
+"""Test""" 
+# we need a testing set
+# we will need to edit the printing for our dataset
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -168,7 +165,6 @@ with torch.no_grad():
         c = (predicted == labels).squeeze()
         for i in range(4):
             label = labels[i]
-   
             class_correct[label] += c[i].item()
             class_total[label] += 1
 

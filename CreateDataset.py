@@ -3,7 +3,7 @@ from torch.utils import data
 import numpy as np
 from PIL import Image
 
-
+"""
 folder = 'data/'  #change to whatever our actual 
 
 # Create two dictionaries, one containing the IDs of images, and other containing labels of images
@@ -17,7 +17,7 @@ for ID in imageIDs['trainingData']:
         trainingLabels[ID] = 0 #clean
     else:
         trainingLabels[ID] = 1 #problematic
-
+"""
 class TrainingSet(data.Dataset):
     def __init__(self, list_IDs, labels, folder):
         """ list_IDs = list of image IDs, this case imageIDs["trainingData"]
